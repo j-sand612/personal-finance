@@ -1,0 +1,11 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  min-width: 0; /* prevent flex blowout on wide tables */
+}

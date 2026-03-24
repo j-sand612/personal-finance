@@ -1,0 +1,143 @@
+/* Scroll container — table is wide */
+.wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+/* ── Header row ─────────────────────────────────────────────── */
+.th {
+  padding: 9px 10px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.labelCol {
+  text-align: left;
+  min-width: 180px;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: var(--color-surface-2);
+}
+
+.monthCol  { min-width: 68px; }
+.totalCol  { min-width: 80px; border-left: 2px solid var(--color-border); }
+.avgCol    { min-width: 72px; }
+
+.inactiveMonth { color: rgba(136, 146, 164, 0.35); }
+
+/* ── Data rows ──────────────────────────────────────────────── */
+.dataRow td {
+  padding: 6px 10px;
+  text-align: right;
+  border-bottom: 1px solid rgba(46, 49, 80, 0.5);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.dataRow:hover td { background: var(--color-surface-2); }
+
+.labelCell {
+  text-align: left !important;
+  position: sticky;
+  left: 0;
+  background: var(--color-surface);
+  z-index: 1;
+  font-size: 13px;
+}
+
+.dataRow:hover .labelCell { background: var(--color-surface-2); }
+
+.totalCell {
+  font-weight: 600;
+  border-left: 2px solid var(--color-border) !important;
+}
+
+.avgCell { color: var(--color-text-muted); }
+
+/* ── Cell states ────────────────────────────────────────────── */
+.cell     {}
+.cellZero { color: rgba(136, 146, 164, 0.4); }
+.cellEmpty { color: rgba(136, 146, 164, 0.25); text-align: center !important; }
+
+.positive { color: var(--color-green) !important; }
+.negative { color: var(--color-red) !important; }
+.overBudget { color: var(--color-red) !important; }
+
+/* ── Section header rows ────────────────────────────────────── */
+.sectionHeader td {
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.headerIncome td  { color: var(--color-accent);  background: rgba(99, 102, 241, 0.08); }
+.headerWants td   { color: var(--color-wants);   background: rgba(249, 115, 22, 0.08); }
+.headerNeeds td   { color: var(--color-needs);   background: rgba(59, 130, 246, 0.08); }
+.headerSavings td { color: var(--color-savings); background: rgba(34, 197, 94, 0.08); }
+.headerBudget td  { color: var(--color-text-muted); background: var(--color-surface-2); }
+
+/* ── Summary rows ───────────────────────────────────────────── */
+.summaryRow td {
+  font-weight: 700;
+  background: var(--color-surface-2) !important;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.summaryRow .labelCell { background: var(--color-surface-2) !important; }
+
+.summaryIncome td  { color: var(--color-accent); }
+.summaryBase td    { color: var(--color-accent); }
+.summaryWants td   { color: var(--color-wants); }
+.summaryNeeds td   { color: var(--color-needs); }
+.summarySavings td { color: var(--color-savings); }
+.summaryGrand td   { color: var(--color-text); }
+.summaryLeftover td { color: var(--color-text); }
+
+/* ── Budget rows ────────────────────────────────────────────── */
+.budgetRow td {
+  font-style: italic;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+}
+
+.budgetNeeds td   { color: rgba(59, 130, 246, 0.7); }
+.budgetWants td   { color: rgba(249, 115, 22, 0.7); }
+.budgetSavings td { color: rgba(34, 197, 94, 0.7); }
+
+/* ── Leftover rows ──────────────────────────────────────────── */
+.leftoverNeeds td,
+.leftoverWants td,
+.leftoverSavings td {
+  background: var(--color-surface-2);
+}
+
+/* ── Spacer rows ────────────────────────────────────────────── */
+.spacer td {
+  padding: 3px 0;
+  background: var(--color-bg);
+  border: none;
+}

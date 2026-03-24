@@ -1,0 +1,94 @@
+.sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.logo {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 8px 8px 16px;
+  color: var(--color-text);
+}
+
+.newMonthBtn {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-weight: 600;
+  width: 100%;
+  margin-bottom: 8px;
+  transition: background 0.15s;
+}
+
+.newMonthBtn:hover {
+  background: var(--color-accent-hover);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  padding: 4px 8px;
+  margin-bottom: 4px;
+}
+
+.link {
+  display: block;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  transition: background 0.1s, color 0.1s;
+  font-size: 13px;
+}
+
+.link:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.link.active {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.yearSelect {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  padding: 4px 0;
+  width: 100%;
+}
+
+.yearSelect:focus { outline: none; }
+.yearSelect option { background: var(--color-surface); }
+
+.empty {
+  padding: 6px 10px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-style: italic;
+}

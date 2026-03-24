@@ -1,0 +1,98 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 700px) {
+  .cards { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.cardLabel {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.cardPct {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.progressTrack {
+  height: 6px;
+  background: var(--color-surface-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.cardNumbers {
+  display: flex;
+  justify-content: space-between;
+}
+
+.cardStat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statValue {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.over  { color: var(--color-red); }
+.under { color: var(--color-green); }
+
+/* Totals bar */
+.totals {
+  display: flex;
+  gap: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 13px;
+}
+
+.totalItem {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}

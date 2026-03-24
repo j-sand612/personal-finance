@@ -1,0 +1,132 @@
+.section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.sectionHeader {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.sectionHeader:hover { background: var(--color-surface-2); }
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sectionTotal {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+
+.row:hover { background: var(--color-surface-2); }
+
+.editRow { background: var(--color-surface-2); }
+.editRow td { padding: 6px 8px; }
+
+/* Column modifiers */
+.amount { text-align: right; font-variant-numeric: tabular-nums; }
+
+.actions {
+  text-align: right;
+  white-space: nowrap;
+  width: 90px;
+}
+
+/* Inline edit inputs */
+.editInput {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  padding: 4px 8px;
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+}
+
+.editInput:focus { border-color: var(--color-accent); }
+
+.amountInput { text-align: right; max-width: 110px; }
+
+/* Action buttons */
+.editBtn,
+.deleteBtn,
+.saveBtn,
+.cancelBtn {
+  background: transparent;
+  border: none;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.editBtn:hover   { background: var(--color-surface-2); }
+.deleteBtn:hover { background: rgba(239, 68, 68, 0.15); }
+
+.saveBtn {
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 4px 10px;
+}
+
+.saveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cancelBtn { color: var(--color-text-muted); }
+.cancelBtn:hover { color: var(--color-text); }
+
+/* Empty state */
+.empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 20px !important;
+  font-style: italic;
+}
+
+/* Footer total row */
+.totalRow td {
+  font-weight: 600;
+  background: var(--color-surface-2);
+  border-top: 1px solid var(--color-border);
+}

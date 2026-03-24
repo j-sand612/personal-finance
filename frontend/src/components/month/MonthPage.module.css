@@ -1,0 +1,76 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.heading {
+  font-size: 24px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.templateBtn {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.templateBtn:hover:not(:disabled) {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.templateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exportBtn {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.exportBtn:hover:not(:disabled) {
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.exportBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.state {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.stateError {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-red);
+}
