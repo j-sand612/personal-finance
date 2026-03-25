@@ -63,6 +63,21 @@
   cursor: not-allowed;
 }
 
+.formatSelect {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.formatSelect:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .importBtn {
   background: var(--color-surface-2);
   color: var(--color-text);

@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   padding: 16px 12px;
-  gap: 8px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
@@ -17,78 +17,86 @@
   color: var(--color-text);
 }
 
-.monthPicker {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 8px;
-}
+/* ── Top-level links (Dashboard, Templates) ─────────────────────────────── */
 
-.pickerYear {
-  width: 58px;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  color: var(--color-text);
-  font-size: 12px;
-  padding: 6px 4px;
-  text-align: center;
-  -moz-appearance: textfield;
-}
-.pickerYear::-webkit-outer-spin-button,
-.pickerYear::-webkit-inner-spin-button { -webkit-appearance: none; }
-
-.pickerMonth {
-  flex: 1;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  color: var(--color-text);
-  font-size: 12px;
-  padding: 6px 4px;
-  min-width: 0;
-}
-
-.pickerBtn {
-  background: var(--color-accent);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  padding: 6px 10px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-
-.pickerBtn:hover {
-  background: var(--color-accent-hover);
-}
-
-.section {
+.topLinks {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-top: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 8px;
 }
 
-.sectionLabel {
+/* ── Year sections ──────────────────────────────────────────────────────── */
+
+.yearList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.yearGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.yearToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 7px 8px;
+  border-radius: 6px;
+  color: var(--color-text-muted);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-  padding: 4px 8px;
-  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
 }
+
+.yearToggle:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.chevron {
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 0.15s;
+  display: inline-block;
+  transform: rotate(0deg);
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.yearItems {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-left: 18px;
+  padding-bottom: 6px;
+}
+
+/* ── Shared link style ──────────────────────────────────────────────────── */
 
 .link {
   display: block;
   padding: 7px 10px;
   border-radius: 6px;
   color: var(--color-text-muted);
-  transition: background 0.1s, color 0.1s;
   font-size: 13px;
+  transition: background 0.1s, color 0.1s;
+  text-decoration: none;
 }
 
 .link:hover {
@@ -101,22 +109,6 @@
   color: var(--color-text);
   font-weight: 500;
 }
-
-.yearSelect {
-  background: transparent;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  padding: 4px 0;
-  width: 100%;
-}
-
-.yearSelect:focus { outline: none; }
-.yearSelect option { background: var(--color-surface); }
 
 .empty {
   padding: 6px 10px;

@@ -46,8 +46,8 @@ export const api = {
     get: (year) => request('GET', `/overview/${year}`),
   },
   import: {
-    month: async (monthId, csvText) => {
-      const res = await fetch(`/api/import/month/${monthId}`, {
+    month: async (monthId, csvText, format = 'new') => {
+      const res = await fetch(`/api/import/month/${monthId}?format=${format}`, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: csvText,

@@ -39,8 +39,12 @@ export const CATEGORIES = {
     'Mortgage',
     'Phone',
   ],
-  savings: ['401k', 'HSA'],
+  savings: ['401k', 'Extra Mortgage Payments', 'HSA'],
 };
+
+// Savings categories that are pre-tax and count toward the budget base.
+// Everything else in savings is post-tax and excluded from the budget base.
+export const PRETAX_SAVINGS = ['401k', 'HSA'];
 
 // Income types
 export const INCOME_TYPES = [

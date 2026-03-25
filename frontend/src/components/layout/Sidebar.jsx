@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client.js';
 import { MONTH_NAMES } from '../../constants/categories.js';
@@ -6,102 +6,77 @@ import styles from './Sidebar.module.css';
 
 export default function Sidebar() {
   const [months, setMonths] = useState([]);
-  const navigate = useNavigate();
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [pickerYear, setPickerYear] = useState(currentYear);
-  const [pickerMonth, setPickerMonth] = useState(currentMonth);
+  const [collapsed, setCollapsed] = useState(new Set()); // years the user has closed
+  const location = useLocation();
 
+  // Re-fetch whenever the route changes — picks up months auto-created by MonthPage
   useEffect(() => {
     api.months.list().then(setMonths).catch(console.error);
-  }, []);
+  }, [location.pathname]);
 
-  const years = [...new Set(months.map((m) => m.year))].sort((a, b) => b - a);
-  if (!years.includes(currentYear)) years.unshift(currentYear);
-
-  const monthsForYear = months
-    .filter((m) => m.year === selectedYear)
-    .sort((a, b) => b.month - a.month);
-
-  async function handleGoToMonth(e) {
-    e.preventDefault();
-    try {
-      const m = await api.months.create(pickerYear, pickerMonth);
-      setMonths((prev) => [...prev, m]);
-    } catch (err) {
-      if (!err.message?.includes('already exists')) {
-        alert(err.message);
-        return;
-      }
-    }
-    navigate(`/month/${pickerYear}/${pickerMonth}`);
+  // Group by year, descending
+  const byYear = {};
+  for (const m of months) {
+    if (!byYear[m.year]) byYear[m.year] = [];
+    byYear[m.year].push(m);
   }
+  const years = Object.keys(byYear).map(Number).sort((a, b) => b - a);
+
+  function toggleYear(year) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year);
+      else next.add(year);
+      return next;
+    });
+  }
+
+  const navClass = ({ isActive }) =>
+    `${styles.link} ${isActive ? styles.active : ''}`;
 
   return (
     <nav className={styles.sidebar}>
       <div className={styles.logo}>💰 Finance</div>
 
-      <form className={styles.monthPicker} onSubmit={handleGoToMonth}>
-        <input
-          className={styles.pickerYear}
-          type="number"
-          min="2000"
-          max="2100"
-          value={pickerYear}
-          onChange={(e) => setPickerYear(Number(e.target.value))}
-        />
-        <select
-          className={styles.pickerMonth}
-          value={pickerMonth}
-          onChange={(e) => setPickerMonth(Number(e.target.value))}
-        >
-          {MONTH_NAMES.map((name, i) => (
-            <option key={i + 1} value={i + 1}>{name}</option>
-          ))}
-        </select>
-        <button className={styles.pickerBtn} type="submit">Go</button>
-      </form>
-
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Overview</div>
-        <NavLink
-          to={`/overview/${selectedYear}`}
-          className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
-        >
-          Year {selectedYear}
-        </NavLink>
-        <NavLink
-          to="/templates"
-          className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
-        >
-          Templates
-        </NavLink>
+      <div className={styles.topLinks}>
+        <NavLink to="/" end className={navClass}>Dashboard</NavLink>
+        <NavLink to="/templates" className={navClass}>Templates</NavLink>
       </div>
 
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className={styles.yearSelect}
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
-        {monthsForYear.map((m) => (
-          <NavLink
-            key={m.id}
-            to={`/month/${m.year}/${m.month}`}
-            className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
-          >
-            {MONTH_NAMES[m.month - 1]}
-          </NavLink>
-        ))}
-        {monthsForYear.length === 0 && (
-          <div className={styles.empty}>No months yet</div>
+      <div className={styles.yearList}>
+        {years.map((year) => {
+          const isOpen = !collapsed.has(year);
+          const yearMonths = byYear[year].sort((a, b) => a.month - b.month);
+          return (
+            <div key={year} className={styles.yearGroup}>
+              <button
+                className={styles.yearToggle}
+                onClick={() => toggleYear(year)}
+              >
+                <span className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}>›</span>
+                {year}
+              </button>
+              {isOpen && (
+                <div className={styles.yearItems}>
+                  <NavLink to={`/overview/${year}`} className={navClass}>
+                    Year Overview
+                  </NavLink>
+                  {yearMonths.map((m) => (
+                    <NavLink
+                      key={m.id}
+                      to={`/month/${year}/${m.month}`}
+                      className={navClass}
+                    >
+                      {MONTH_NAMES[m.month - 1]}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {years.length === 0 && (
+          <div className={styles.empty}>No data yet</div>
         )}
       </div>
     </nav>

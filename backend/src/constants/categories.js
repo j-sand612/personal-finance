@@ -13,8 +13,12 @@ const CATEGORIES = {
     'Car - Maintenance', 'Groceries', 'Bill - Gas', 'Medical',
     'Car - Gas', 'Dog', 'Children', 'Bill - Life Insurance',
   ],
-  savings: ['401k', 'HSA'],
+  savings: ['401k', 'Extra Mortgage Payments', 'HSA'],
 };
+
+// Savings categories that are pre-tax and count toward the budget base.
+// Everything else in savings is post-tax and excluded from the budget base.
+const PRETAX_SAVINGS = ['401k', 'HSA'];
 
 const INCOME_TYPES = [
   { value: 'paycheck',            label: 'Paycheck' },
@@ -30,4 +34,4 @@ const MONTH_NAMES = [
 
 const BUDGET_PERCENTAGES = { needs: 0.50, wants: 0.30, savings: 0.20 };
 
-module.exports = { CATEGORIES, INCOME_TYPES, MONTH_NAMES, BUDGET_PERCENTAGES };
+module.exports = { CATEGORIES, INCOME_TYPES, MONTH_NAMES, BUDGET_PERCENTAGES, PRETAX_SAVINGS };

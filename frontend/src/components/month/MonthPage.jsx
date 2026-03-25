@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../api/client.js';
 import { downloadFile } from '../../api/download.js';
-import { MONTH_NAMES, BUDGET_PERCENTAGES } from '../../constants/categories.js';
+import { MONTH_NAMES, BUDGET_PERCENTAGES, PRETAX_SAVINGS } from '../../constants/categories.js';
 import BudgetSummary from './BudgetSummary.jsx';
 import QuickAddForm from './QuickAddForm.jsx';
 import IncomeSection from './IncomeSection.jsx';
@@ -23,6 +23,7 @@ export default function MonthPage() {
   const [applyingTemplates, setApplyingTemplates] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null); // { income, expenses, errors }
+  const [importFormat, setImportFormat] = useState('new');
   const fileInputRef = useRef(null);
 
   // Ensure the month row exists and load its data
@@ -115,7 +116,7 @@ export default function MonthPage() {
     setImportResult(null);
     try {
       const csvText = await file.text();
-      const result = await api.import.month(monthId, csvText);
+      const result = await api.import.month(monthId, csvText, importFormat);
       // Refresh data
       const [inc, exp] = await Promise.all([
         api.income.list(monthId),
@@ -134,7 +135,10 @@ export default function MonthPage() {
   // ── Budget computation ────────────────────────────────────────────────────
   const totalIncome = income.reduce((s, r) => s + r.amount, 0);
   const savingsExpenses = expenses.filter((e) => e.section === 'savings');
-  const budgetBase = totalIncome + savingsExpenses.reduce((s, r) => s + r.amount, 0);
+  const preTaxSavings = savingsExpenses.filter((e) =>
+    PRETAX_SAVINGS.some((p) => p.toLowerCase() === e.category.toLowerCase())
+  );
+  const budgetBase = totalIncome + preTaxSavings.reduce((s, r) => s + r.amount, 0);
 
   const budgeted = {
     wants:   budgetBase * BUDGET_PERCENTAGES.wants,
@@ -168,6 +172,15 @@ export default function MonthPage() {
               {applyingTemplates ? 'Applying…' : '⚡ Apply Templates'}
             </button>
           )}
+          <select
+            className={styles.formatSelect}
+            value={importFormat}
+            onChange={(e) => setImportFormat(e.target.value)}
+            disabled={importing}
+          >
+            <option value="new">New format</option>
+            <option value="legacy">Legacy (Google Sheets)</option>
+          </select>
           <button
             className={styles.importBtn}
             onClick={() => fileInputRef.current?.click()}

@@ -4,10 +4,27 @@ import {
   INCOME_TYPES,
   MONTH_NAMES,
   BUDGET_PERCENTAGES,
+  PRETAX_SAVINGS,
 } from '../../constants/categories.js';
 import styles from './OverviewTable.module.css';
 
 const ALL_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+// Case-insensitive category lookup on an expenseMap section object.
+// Merges all keys that match the category name (e.g. 'Misc' + 'misc') into one month map.
+function findCategory(sectionMap, cat) {
+  if (!sectionMap) return undefined;
+  const lower = cat.toLowerCase();
+  const matchingKeys = Object.keys(sectionMap).filter((k) => k.toLowerCase() === lower);
+  if (matchingKeys.length === 0) return undefined;
+  const merged = {};
+  for (const key of matchingKeys) {
+    for (const [month, val] of Object.entries(sectionMap[key])) {
+      merged[Number(month)] = (merged[Number(month)] ?? 0) + val;
+    }
+  }
+  return merged;
+}
 const SHORT_MONTHS = MONTH_NAMES.map((n) => n.slice(0, 3));
 
 const fmt = (n) =>
@@ -52,6 +69,23 @@ function stats(values, avgDenominator) {
   return { total, avg };
 }
 
+// Sum all data-map entries whose keys don't match any known category (case-insensitive).
+// Returns a values array if there are unknowns, or null if nothing to show.
+function getOtherValues(sectionMap, knownCats, activeMonths) {
+  if (!sectionMap) return null;
+  const unknownKeys = Object.keys(sectionMap).filter(
+    (k) => !knownCats.some((c) => c.toLowerCase() === k.toLowerCase())
+  );
+  if (unknownKeys.length === 0) return null;
+  const otherMonthMap = {};
+  for (const key of unknownKeys) {
+    for (const [month, val] of Object.entries(sectionMap[key])) {
+      otherMonthMap[month] = (otherMonthMap[month] ?? 0) + val;
+    }
+  }
+  return makeValues(otherMonthMap, activeMonths);
+}
+
 function sumValues(...valueArrays) {
   return ALL_MONTHS.map((_, i) => {
     const vals = valueArrays.map((arr) => arr[i] ?? 0);
@@ -92,13 +126,15 @@ function buildRows(data) {
 
   spacer();
 
-  // 401k + HSA from savings section (shown here as part of budget base)
-  const savings401kValues = makeValues(expenseMap['savings']?.['401k'], activeMonths);
-  const savingsHSAValues  = makeValues(expenseMap['savings']?.['HSA'],  activeMonths);
-  push({ type: 'data', label: '401k Contributions', values: savings401kValues, ...stats(savings401kValues, avgDenominator) });
-  push({ type: 'data', label: 'HSA Contributions',  values: savingsHSAValues,  ...stats(savingsHSAValues,  avgDenominator) });
+  // Pre-tax savings (e.g. 401k, HSA) are shown here and added to the budget base.
+  // Post-tax savings (e.g. Extra Mortgage Payments) appear only in the Savings section below.
+  const preTaxSavingsValuesList = PRETAX_SAVINGS.map((cat) => {
+    const values = makeValues(findCategory(expenseMap['savings'], cat), activeMonths);
+    push({ type: 'data', label: `${cat} Contributions`, values, ...stats(values, avgDenominator) });
+    return values;
+  });
 
-  const budgetBaseValues = sumValues(totalIncomeValues, savings401kValues, savingsHSAValues);
+  const budgetBaseValues = sumValues(totalIncomeValues, ...preTaxSavingsValuesList);
   const budgetBaseStats  = stats(budgetBaseValues, avgDenominator);
   push({ type: 'summary', label: 'Budget Base', values: budgetBaseValues, ...budgetBaseStats, className: styles.summaryBase });
 
@@ -109,10 +145,16 @@ function buildRows(data) {
   const wantsCategoryValues = [];
 
   CATEGORIES.wants.forEach((cat) => {
-    const values = makeValues(expenseMap['wants']?.[cat], activeMonths);
+    const values = makeValues(findCategory(expenseMap['wants'], cat), activeMonths);
     wantsCategoryValues.push(values);
     push({ type: 'data', label: cat, values, ...stats(values, avgDenominator) });
   });
+
+  const wantsOther = getOtherValues(expenseMap['wants'], CATEGORIES.wants, activeMonths);
+  if (wantsOther) {
+    wantsCategoryValues.push(wantsOther);
+    push({ type: 'data', label: 'Other', values: wantsOther, ...stats(wantsOther, avgDenominator) });
+  }
 
   const wantsTotalValues = sumValues(...wantsCategoryValues);
   push({ type: 'summary', label: 'Wants Total', values: wantsTotalValues, ...stats(wantsTotalValues, avgDenominator), className: styles.summaryWants });
@@ -124,10 +166,16 @@ function buildRows(data) {
   const needsCategoryValues = [];
 
   CATEGORIES.needs.forEach((cat) => {
-    const values = makeValues(expenseMap['needs']?.[cat], activeMonths);
+    const values = makeValues(findCategory(expenseMap['needs'], cat), activeMonths);
     needsCategoryValues.push(values);
     push({ type: 'data', label: cat, values, ...stats(values, avgDenominator) });
   });
+
+  const needsOther = getOtherValues(expenseMap['needs'], CATEGORIES.needs, activeMonths);
+  if (needsOther) {
+    needsCategoryValues.push(needsOther);
+    push({ type: 'data', label: 'Other', values: needsOther, ...stats(needsOther, avgDenominator) });
+  }
 
   const needsTotalValues = sumValues(...needsCategoryValues);
   push({ type: 'summary', label: 'Needs Total', values: needsTotalValues, ...stats(needsTotalValues, avgDenominator), className: styles.summaryNeeds });
@@ -139,10 +187,16 @@ function buildRows(data) {
   const savingsCategoryValues = [];
 
   CATEGORIES.savings.forEach((cat) => {
-    const values = makeValues(expenseMap['savings']?.[cat], activeMonths);
+    const values = makeValues(findCategory(expenseMap['savings'], cat), activeMonths);
     savingsCategoryValues.push(values);
     push({ type: 'data', label: cat, values, ...stats(values, avgDenominator) });
   });
+
+  const savingsOther = getOtherValues(expenseMap['savings'], CATEGORIES.savings, activeMonths);
+  if (savingsOther) {
+    savingsCategoryValues.push(savingsOther);
+    push({ type: 'data', label: 'Other', values: savingsOther, ...stats(savingsOther, avgDenominator) });
+  }
 
   const savingsTotalValues = sumValues(...savingsCategoryValues);
   push({ type: 'summary', label: 'Savings Total', values: savingsTotalValues, ...stats(savingsTotalValues, avgDenominator), className: styles.summarySavings });

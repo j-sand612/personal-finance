@@ -1,7 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
-const { CATEGORIES, INCOME_TYPES, MONTH_NAMES, BUDGET_PERCENTAGES } = require('../constants/categories');
+const { CATEGORIES, INCOME_TYPES, MONTH_NAMES, BUDGET_PERCENTAGES, PRETAX_SAVINGS } = require('../constants/categories');
+
+// Case-insensitive category lookup on an expenseMap section object.
+// Merges all keys that match the category name (e.g. 'Misc' + 'misc') into one month map.
+function findCategory(sectionMap, cat) {
+  if (!sectionMap) return undefined;
+  const lower = cat.toLowerCase();
+  const matchingKeys = Object.keys(sectionMap).filter((k) => k.toLowerCase() === lower);
+  if (matchingKeys.length === 0) return undefined;
+  const merged = {};
+  for (const key of matchingKeys) {
+    for (const [month, val] of Object.entries(sectionMap[key])) {
+      merged[Number(month)] = (merged[Number(month)] ?? 0) + val;
+    }
+  }
+  return merged;
+}
 
 function escapeCsv(val) {
   if (val === null || val === undefined) return '';
@@ -37,11 +53,14 @@ router.get('/month/:monthId', (req, res) => {
   const savings = expenses.filter((e) => e.section === 'savings');
 
   // Budget calculations
-  const totalIncome  = income.reduce((s, r) => s + r.amount, 0);
-  const totalWants   = wants.reduce((s, r) => s + r.amount, 0);
-  const totalNeeds   = needs.reduce((s, r) => s + r.amount, 0);
-  const totalSavings = savings.reduce((s, r) => s + r.amount, 0);
-  const budgetBase   = totalIncome + totalSavings;
+  const totalIncome    = income.reduce((s, r) => s + r.amount, 0);
+  const totalWants     = wants.reduce((s, r) => s + r.amount, 0);
+  const totalNeeds     = needs.reduce((s, r) => s + r.amount, 0);
+  const totalSavings   = savings.reduce((s, r) => s + r.amount, 0);
+  const preTaxSavings  = savings.filter((e) =>
+    PRETAX_SAVINGS.some((p) => p.toLowerCase() === e.category.toLowerCase())
+  );
+  const budgetBase     = totalIncome + preTaxSavings.reduce((s, r) => s + r.amount, 0);
   const budgetNeeds  = budgetBase * BUDGET_PERCENTAGES.needs;
   const budgetWants  = budgetBase * BUDGET_PERCENTAGES.wants;
   const budgetSavings = budgetBase * BUDGET_PERCENTAGES.savings;
@@ -164,6 +183,23 @@ router.get('/year/:year', (req, res) => {
     csvRows.push(Array(TOTAL_COLS).fill('').join(','));
   }
 
+  // Sum categories in sectionMap not matched by any known category (case-insensitive).
+  // Returns a vals array if unknowns exist, or null if nothing to show.
+  function getOtherVals(sectionMap, knownCats) {
+    if (!sectionMap) return null;
+    const unknownKeys = Object.keys(sectionMap).filter(
+      (k) => !knownCats.some((c) => c.toLowerCase() === k.toLowerCase())
+    );
+    if (unknownKeys.length === 0) return null;
+    const otherMonthMap = {};
+    for (const key of unknownKeys) {
+      for (const [month, val] of Object.entries(sectionMap[key])) {
+        otherMonthMap[Number(month)] = (otherMonthMap[Number(month)] ?? 0) + val;
+      }
+    }
+    return vals(otherMonthMap);
+  }
+
   // ── Income ──────────────────────────────────────────────────────────────────
   const incomeByType = INCOME_TYPES.map(({ value, label }) => {
     const v = vals(incomeMap[value]);
@@ -175,21 +211,24 @@ router.get('/year/:year', (req, res) => {
 
   addEmptyRow();
 
-  const v401k = vals(expenseMap['savings']?.['401k']);
-  const vHSA  = vals(expenseMap['savings']?.['HSA']);
-  addRow('savings', '401k Contributions', v401k);
-  addRow('savings', 'HSA Contributions', vHSA);
-  const budgetBaseVals = sumVals(totalIncomeVals, v401k, vHSA);
+  const preTaxVals = PRETAX_SAVINGS.map((cat) => {
+    const v = vals(findCategory(expenseMap['savings'], cat));
+    addRow('savings', `${cat} Contributions`, v);
+    return v;
+  });
+  const budgetBaseVals = sumVals(totalIncomeVals, ...preTaxVals);
   addRow('summary', 'BUDGET BASE', budgetBaseVals);
 
   addEmptyRow();
 
   // ── Wants ────────────────────────────────────────────────────────────────────
   const wantsVals = CATEGORIES.wants.map((cat) => {
-    const v = vals(expenseMap['wants']?.[cat]);
+    const v = vals(findCategory(expenseMap['wants'], cat));
     addRow('wants', cat, v);
     return v;
   });
+  const wantsOther = getOtherVals(expenseMap['wants'], CATEGORIES.wants);
+  if (wantsOther) { addRow('wants', 'Other', wantsOther); wantsVals.push(wantsOther); }
   const wantsTotalVals = sumVals(...wantsVals);
   addRow('wants', 'WANTS TOTAL', wantsTotalVals);
 
@@ -197,10 +236,12 @@ router.get('/year/:year', (req, res) => {
 
   // ── Needs ────────────────────────────────────────────────────────────────────
   const needsVals = CATEGORIES.needs.map((cat) => {
-    const v = vals(expenseMap['needs']?.[cat]);
+    const v = vals(findCategory(expenseMap['needs'], cat));
     addRow('needs', cat, v);
     return v;
   });
+  const needsOther = getOtherVals(expenseMap['needs'], CATEGORIES.needs);
+  if (needsOther) { addRow('needs', 'Other', needsOther); needsVals.push(needsOther); }
   const needsTotalVals = sumVals(...needsVals);
   addRow('needs', 'NEEDS TOTAL', needsTotalVals);
 
@@ -208,10 +249,12 @@ router.get('/year/:year', (req, res) => {
 
   // ── Savings ──────────────────────────────────────────────────────────────────
   const savingsVals = CATEGORIES.savings.map((cat) => {
-    const v = vals(expenseMap['savings']?.[cat]);
+    const v = vals(findCategory(expenseMap['savings'], cat));
     addRow('savings', cat, v);
     return v;
   });
+  const savingsOther = getOtherVals(expenseMap['savings'], CATEGORIES.savings);
+  if (savingsOther) { addRow('savings', 'Other', savingsOther); savingsVals.push(savingsOther); }
   const savingsTotalVals = sumVals(...savingsVals);
   addRow('savings', 'SAVINGS TOTAL', savingsTotalVals);
 
