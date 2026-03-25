@@ -8,7 +8,10 @@ export default function Sidebar() {
   const [months, setMonths] = useState([]);
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [pickerYear, setPickerYear] = useState(currentYear);
+  const [pickerMonth, setPickerMonth] = useState(currentMonth);
 
   useEffect(() => {
     api.months.list().then(setMonths).catch(console.error);
@@ -21,30 +24,44 @@ export default function Sidebar() {
     .filter((m) => m.year === selectedYear)
     .sort((a, b) => b.month - a.month);
 
-  async function handleNewMonth() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+  async function handleGoToMonth(e) {
+    e.preventDefault();
     try {
-      const m = await api.months.create(year, month);
+      const m = await api.months.create(pickerYear, pickerMonth);
       setMonths((prev) => [...prev, m]);
-      navigate(`/month/${m.year}/${m.month}`);
     } catch (err) {
-      if (err.message?.includes('already exists')) {
-        navigate(`/month/${year}/${month}`);
-      } else {
+      if (!err.message?.includes('already exists')) {
         alert(err.message);
+        return;
       }
     }
+    navigate(`/month/${pickerYear}/${pickerMonth}`);
   }
 
   return (
     <nav className={styles.sidebar}>
       <div className={styles.logo}>💰 Finance</div>
 
-      <button className={styles.newMonthBtn} onClick={handleNewMonth}>
-        + New Month
-      </button>
+      <form className={styles.monthPicker} onSubmit={handleGoToMonth}>
+        <input
+          className={styles.pickerYear}
+          type="number"
+          min="2000"
+          max="2100"
+          value={pickerYear}
+          onChange={(e) => setPickerYear(Number(e.target.value))}
+        />
+        <select
+          className={styles.pickerMonth}
+          value={pickerMonth}
+          onChange={(e) => setPickerMonth(Number(e.target.value))}
+        >
+          {MONTH_NAMES.map((name, i) => (
+            <option key={i + 1} value={i + 1}>{name}</option>
+          ))}
+        </select>
+        <button className={styles.pickerBtn} type="submit">Go</button>
+      </form>
 
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Overview</div>

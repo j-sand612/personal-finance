@@ -8,12 +8,14 @@ const expensesRouter = require('./routes/expenses');
 const templatesRouter = require('./routes/templates');
 const overviewRouter = require('./routes/overview');
 const exportRouter   = require('./routes/export');
+const importRouter   = require('./routes/import');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/import', express.text());
 
 app.use('/api/months', monthsRouter);
 // Nested under months
@@ -25,6 +27,7 @@ app.use('/api/expenses', expensesRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api/overview', overviewRouter);
 app.use('/api/export',   exportRouter);
+app.use('/api/import',   importRouter);
 
 app.use(errorHandler);
 

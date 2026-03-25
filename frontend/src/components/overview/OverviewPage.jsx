@@ -37,7 +37,7 @@ export default function OverviewPage() {
         <button
           className={styles.exportBtn}
           disabled={!data || data.months.length === 0}
-          onClick={() => downloadFile(`/api/export/year/${yearNum}`, `${yearNum}-overview.xlsx`)}
+          onClick={() => downloadFile(`/api/export/year/${yearNum}`, `${yearNum}-overview.csv`)}
         >
           ↓ Export
         </button>

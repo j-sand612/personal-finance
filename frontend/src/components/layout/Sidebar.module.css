@@ -17,19 +17,51 @@
   color: var(--color-text);
 }
 
-.newMonthBtn {
+.monthPicker {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.pickerYear {
+  width: 58px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-size: 12px;
+  padding: 6px 4px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.pickerYear::-webkit-outer-spin-button,
+.pickerYear::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.pickerMonth {
+  flex: 1;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-size: 12px;
+  padding: 6px 4px;
+  min-width: 0;
+}
+
+.pickerBtn {
   background: var(--color-accent);
   color: #fff;
   border: none;
   border-radius: var(--radius);
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-weight: 600;
-  width: 100%;
-  margin-bottom: 8px;
+  font-size: 13px;
+  cursor: pointer;
   transition: background 0.15s;
+  white-space: nowrap;
 }
 
-.newMonthBtn:hover {
+.pickerBtn:hover {
   background: var(--color-accent-hover);
 }
 

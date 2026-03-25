@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../api/client.js';
 import { downloadFile } from '../../api/download.js';
 import { MONTH_NAMES, BUDGET_PERCENTAGES } from '../../constants/categories.js';
@@ -21,6 +21,9 @@ export default function MonthPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [applyingTemplates, setApplyingTemplates] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null); // { income, expenses, errors }
+  const fileInputRef = useRef(null);
 
   // Ensure the month row exists and load its data
   useEffect(() => {
@@ -103,6 +106,31 @@ export default function MonthPage() {
     }
   }
 
+  // ── Import ───────────────────────────────────────────────────────────────
+  async function handleImportFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const csvText = await file.text();
+      const result = await api.import.month(monthId, csvText);
+      // Refresh data
+      const [inc, exp] = await Promise.all([
+        api.income.list(monthId),
+        api.expenses.list(monthId),
+      ]);
+      setIncome(inc);
+      setExpenses(exp);
+      setImportResult(result);
+    } catch (err) {
+      setImportResult({ error: err.message });
+    } finally {
+      setImporting(false);
+    }
+  }
+
   // ── Budget computation ────────────────────────────────────────────────────
   const totalIncome = income.reduce((s, r) => s + r.amount, 0);
   const savingsExpenses = expenses.filter((e) => e.section === 'savings');
@@ -141,14 +169,44 @@ export default function MonthPage() {
             </button>
           )}
           <button
+            className={styles.importBtn}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!monthId || importing}
+          >
+            {importing ? 'Importing…' : '↑ Import'}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            style={{ display: 'none' }}
+            onChange={handleImportFile}
+          />
+          <button
             className={styles.exportBtn}
-            onClick={() => downloadFile(`/api/export/month/${monthId}`, `${monthName}-${year}.xlsx`)}
+            onClick={() => downloadFile(`/api/export/month/${monthId}`, `${monthName}-${year}.csv`)}
             disabled={!monthId}
           >
             ↓ Export
           </button>
         </div>
       </div>
+
+      {importResult && (
+        <div className={importResult.error ? styles.importError : styles.importSuccess}>
+          {importResult.error ? (
+            <span>{importResult.error}</span>
+          ) : (
+            <span>
+              Imported {importResult.imported.income} income and {importResult.imported.expenses} expense rows.
+              {importResult.errors.length > 0 && (
+                <> {importResult.errors.length} row{importResult.errors.length > 1 ? 's' : ''} skipped: {importResult.errors.join('; ')}</>
+              )}
+            </span>
+          )}
+          <button className={styles.importDismiss} onClick={() => setImportResult(null)}>✕</button>
+        </div>
+      )}
 
       <BudgetSummary budgeted={budgeted} spent={spent} totalIncome={totalIncome} />
 
