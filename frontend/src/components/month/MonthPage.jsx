@@ -16,6 +16,9 @@ export default function MonthPage() {
   const monthNum = Number(month);
 
   const [monthId, setMonthId] = useState(null);
+  const [notes, setNotes] = useState('');
+  const [notesDraft, setNotesDraft] = useState('');
+  const [notesSaving, setNotesSaving] = useState(false);
   const [income, setIncome] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +45,8 @@ export default function MonthPage() {
         }
         if (cancelled) return;
         setMonthId(m.id);
+        setNotes(m.notes ?? '');
+        setNotesDraft(m.notes ?? '');
 
         const [inc, exp] = await Promise.all([
           api.income.list(m.id),
@@ -93,13 +98,28 @@ export default function MonthPage() {
     setExpenses((prev) => prev.filter((x) => x.id !== id));
   }, []);
 
+  // ── Notes ────────────────────────────────────────────────────────────────
+  async function handleSaveNotes() {
+    setNotesSaving(true);
+    try {
+      const m = await api.months.updateNotes(monthId, notesDraft);
+      setNotes(m.notes ?? '');
+      setNotesDraft(m.notes ?? '');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setNotesSaving(false);
+    }
+  }
+
   // ── Apply templates ───────────────────────────────────────────────────────
   async function handleApplyTemplates() {
     if (!window.confirm('Apply recurring templates to this month? This will add all template entries.')) return;
     setApplyingTemplates(true);
     try {
-      const inserted = await api.expenses.applyTemplates(monthId);
-      setExpenses(inserted);
+      const result = await api.expenses.applyTemplates(monthId);
+      setExpenses(result.expenses);
+      setIncome(result.income);
     } catch (err) {
       alert(err.message);
     } finally {
@@ -254,6 +274,34 @@ export default function MonthPage() {
         onUpdate={handleUpdateExpense}
         onDelete={handleDeleteExpense}
       />
+
+      <div className={styles.notesSection}>
+        <h2 className={styles.notesHeading}>Notes</h2>
+        <textarea
+          className={styles.notesTextarea}
+          value={notesDraft}
+          onChange={(e) => setNotesDraft(e.target.value)}
+          placeholder="Add notes for this month…"
+          rows={4}
+        />
+        <div className={styles.notesActions}>
+          {notesDraft !== notes && (
+            <button
+              className={styles.notesCancelBtn}
+              onClick={() => setNotesDraft(notes)}
+            >
+              Discard
+            </button>
+          )}
+          <button
+            className={styles.notesSaveBtn}
+            onClick={handleSaveNotes}
+            disabled={notesSaving || notesDraft === notes}
+          >
+            {notesSaving ? 'Saving…' : 'Save Notes'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

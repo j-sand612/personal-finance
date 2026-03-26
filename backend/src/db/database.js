@@ -23,4 +23,7 @@ const schemaNoPragmas = schema
   .join('\n');
 db.exec(schemaNoPragmas);
 
+// Migrations for columns added after initial schema
+try { db.exec('ALTER TABLE months ADD COLUMN notes TEXT'); } catch {}
+
 module.exports = db;

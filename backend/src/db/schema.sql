@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS months (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     year       INTEGER NOT NULL,
     month      INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
+    notes      TEXT,
     created_at TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE (year, month)
 );
@@ -43,4 +44,13 @@ CREATE TABLE IF NOT EXISTS templates (
     amount     REAL,
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS income_templates (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    type        TEXT    NOT NULL CHECK (type IN ('paycheck', 'stock_bonus', 'performance_bonus', 'misc')),
+    description TEXT,
+    amount      REAL,
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );

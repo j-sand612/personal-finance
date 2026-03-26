@@ -36,21 +36,25 @@ router.post('/', (req, res) => {
 });
 
 // POST /api/months/:monthId/expenses/apply-templates
-// Bulk-inserts all templates as expenses for this month
+// Bulk-inserts all expense and income templates for this month
 router.post('/apply-templates', (req, res) => {
-  const templates = db
-    .prepare('SELECT * FROM templates ORDER BY sort_order')
-    .all();
+  const expenseTemplates = db.prepare('SELECT * FROM templates ORDER BY sort_order').all();
+  const incomeTemplates  = db.prepare('SELECT * FROM income_templates ORDER BY sort_order').all();
 
-  const insert = db.prepare(
+  const insertExpense = db.prepare(
     'INSERT INTO expenses (month_id, section, category, detail, amount, date) VALUES (?, ?, ?, ?, ?, ?)'
+  );
+  const insertIncome = db.prepare(
+    'INSERT INTO income (month_id, type, amount, description, date) VALUES (?, ?, ?, ?, ?)'
   );
 
   db.exec('BEGIN');
   try {
-    for (const t of templates) {
-      // NULL-amount templates insert as 0 so they appear as line items to fill in
-      insert.run(req.params.monthId, t.section, t.category, t.detail, t.amount ?? 0, null);
+    for (const t of expenseTemplates) {
+      insertExpense.run(req.params.monthId, t.section, t.category, t.detail, t.amount ?? 0, null);
+    }
+    for (const t of incomeTemplates) {
+      insertIncome.run(req.params.monthId, t.type, t.amount ?? 0, t.description, null);
     }
     db.exec('COMMIT');
   } catch (err) {
@@ -58,10 +62,14 @@ router.post('/apply-templates', (req, res) => {
     throw err;
   }
 
-  const inserted = db
+  const expenses = db
     .prepare('SELECT * FROM expenses WHERE month_id = ? ORDER BY section, category, created_at')
     .all(req.params.monthId);
-  res.status(201).json(inserted);
+  const income = db
+    .prepare('SELECT * FROM income WHERE month_id = ? ORDER BY created_at')
+    .all(req.params.monthId);
+
+  res.status(201).json({ expenses, income });
 });
 
 // PUT /api/expenses/:id

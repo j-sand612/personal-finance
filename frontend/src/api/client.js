@@ -20,6 +20,7 @@ export const api = {
   months: {
     list: () => request('GET', '/months'),
     create: (year, month) => request('POST', '/months', { year, month }),
+    updateNotes: (id, notes) => request('PATCH', `/months/${id}/notes`, { notes }),
     delete: (id) => request('DELETE', `/months/${id}`),
   },
   income: {
@@ -41,6 +42,12 @@ export const api = {
     create: (data) => request('POST', '/templates', data),
     update: (id, data) => request('PUT', `/templates/${id}`, data),
     delete: (id) => request('DELETE', `/templates/${id}`),
+  },
+  incomeTemplates: {
+    list: () => request('GET', '/templates/income'),
+    create: (data) => request('POST', '/templates/income', data),
+    update: (id, data) => request('PUT', `/templates/income/${id}`, data),
+    delete: (id) => request('DELETE', `/templates/income/${id}`),
   },
   overview: {
     get: (year) => request('GET', `/overview/${year}`),

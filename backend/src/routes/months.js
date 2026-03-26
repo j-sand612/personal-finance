@@ -27,6 +27,14 @@ router.post('/', (req, res) => {
   }
 });
 
+// PATCH /api/months/:id/notes
+router.patch('/:id/notes', (req, res) => {
+  const { notes } = req.body;
+  db.prepare('UPDATE months SET notes = ? WHERE id = ?').run(notes ?? null, req.params.id);
+  const updated = db.prepare('SELECT * FROM months WHERE id = ?').get(req.params.id);
+  res.json(updated);
+});
+
 // DELETE /api/months/:id
 router.delete('/:id', (req, res) => {
   db.prepare('DELETE FROM months WHERE id = ?').run(req.params.id);

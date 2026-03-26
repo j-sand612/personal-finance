@@ -140,6 +140,76 @@
   opacity: 1;
 }
 
+.notesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notesHeading {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.notesTextarea {
+  width: 100%;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.notesTextarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.notesActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.notesSaveBtn {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.notesSaveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.notesCancelBtn {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.notesCancelBtn:hover {
+  background: var(--color-surface);
+}
+
 .state {
   padding: 40px;
   text-align: center;
