@@ -2,6 +2,29 @@ import { useState } from 'react';
 import { INCOME_TYPES } from '../../constants/categories.js';
 import styles from './Section.module.css';
 
+function SortHeader({ label, colKey, sort, onSort, className }) {
+  const active = sort.key === colKey;
+  return (
+    <th className={`${className ?? ''} ${styles.sortableHeader}`} onClick={() => onSort(colKey)}>
+      {label}{active ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ''}
+    </th>
+  );
+}
+
+function sortRows(rows, { key, dir }) {
+  return [...rows].sort((a, b) => {
+    let cmp;
+    if (key === 'amount') {
+      cmp = a.amount - b.amount;
+    } else {
+      const av = a[key] ?? '';
+      const bv = b[key] ?? '';
+      cmp = String(av).localeCompare(String(bv));
+    }
+    return dir === 'asc' ? cmp : -cmp;
+  });
+}
+
 const typeLabel = (t) => INCOME_TYPES.find((x) => x.value === t)?.label ?? t;
 const fmt = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const fmtDate = (d) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—');
@@ -109,6 +132,13 @@ function IncomeRow({ row, onUpdate, onDelete }) {
 
 export default function IncomeSection({ income, onUpdate, onDelete }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [sort, setSort] = useState({ key: 'created_at', dir: 'asc' });
+
+  function toggleSort(key) {
+    setSort((s) => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' });
+  }
+
+  const sorted = sortRows(income, sort);
   const total = income.reduce((s, r) => s + r.amount, 0);
 
   return (
@@ -126,20 +156,20 @@ export default function IncomeSection({ income, onUpdate, onDelete }) {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Type</th>
-              <th>Description</th>
-              <th className={styles.amount}>Amount</th>
-              <th>Date</th>
+              <SortHeader label="Type"        colKey="type"        sort={sort} onSort={toggleSort} />
+              <SortHeader label="Description" colKey="description" sort={sort} onSort={toggleSort} />
+              <SortHeader label="Amount"      colKey="amount"      sort={sort} onSort={toggleSort} className={styles.amount} />
+              <SortHeader label="Date"        colKey="date"        sort={sort} onSort={toggleSort} />
               <th className={styles.actions} />
             </tr>
           </thead>
           <tbody>
-            {income.length === 0 ? (
+            {sorted.length === 0 ? (
               <tr>
                 <td colSpan={5} className={styles.empty}>No income entries yet</td>
               </tr>
             ) : (
-              income.map((row) => (
+              sorted.map((row) => (
                 <IncomeRow key={row.id} row={row} onUpdate={onUpdate} onDelete={onDelete} />
               ))
             )}

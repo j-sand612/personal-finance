@@ -2,6 +2,29 @@ import { useState } from 'react';
 import { CATEGORIES, SECTION_LABELS } from '../../constants/categories.js';
 import styles from './Section.module.css';
 
+function SortHeader({ label, colKey, sort, onSort, className }) {
+  const active = sort.key === colKey;
+  return (
+    <th className={`${className ?? ''} ${styles.sortableHeader}`} onClick={() => onSort(colKey)}>
+      {label}{active ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ''}
+    </th>
+  );
+}
+
+function sortRows(rows, { key, dir }) {
+  return [...rows].sort((a, b) => {
+    let cmp;
+    if (key === 'amount') {
+      cmp = a.amount - b.amount;
+    } else {
+      const av = a[key] ?? '';
+      const bv = b[key] ?? '';
+      cmp = String(av).localeCompare(String(bv));
+    }
+    return dir === 'asc' ? cmp : -cmp;
+  });
+}
+
 const fmt = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const fmtDate = (d) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—');
 
@@ -125,6 +148,13 @@ function ExpenseRow({ row, section, onUpdate, onDelete }) {
 
 export default function ExpenseSection({ section, expenses, onUpdate, onDelete }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [sort, setSort] = useState({ key: 'created_at', dir: 'asc' });
+
+  function toggleSort(key) {
+    setSort((s) => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' });
+  }
+
+  const sorted = sortRows(expenses, sort);
   const total = expenses.reduce((s, r) => s + r.amount, 0);
   const color = SECTION_COLORS[section];
   const label = SECTION_LABELS[section];
@@ -144,20 +174,20 @@ export default function ExpenseSection({ section, expenses, onUpdate, onDelete }
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Category</th>
-              <th>Detail</th>
-              <th className={styles.amount}>Amount</th>
-              <th>Date</th>
+              <SortHeader label="Category" colKey="category" sort={sort} onSort={toggleSort} />
+              <SortHeader label="Detail"   colKey="detail"   sort={sort} onSort={toggleSort} />
+              <SortHeader label="Amount"   colKey="amount"   sort={sort} onSort={toggleSort} className={styles.amount} />
+              <SortHeader label="Date"     colKey="date"     sort={sort} onSort={toggleSort} />
               <th className={styles.actions} />
             </tr>
           </thead>
           <tbody>
-            {expenses.length === 0 ? (
+            {sorted.length === 0 ? (
               <tr>
                 <td colSpan={5} className={styles.empty}>No {label.toLowerCase()} expenses yet</td>
               </tr>
             ) : (
-              expenses.map((row) => (
+              sorted.map((row) => (
                 <ExpenseRow
                   key={row.id}
                   row={row}

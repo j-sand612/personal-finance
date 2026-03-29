@@ -8,7 +8,7 @@ const VALID_SECTIONS = ['wants', 'needs', 'savings'];
 router.get('/', (req, res) => {
   const rows = db
     .prepare(
-      'SELECT * FROM expenses WHERE month_id = ? ORDER BY section, category, created_at'
+      'SELECT * FROM expenses WHERE month_id = ? ORDER BY created_at'
     )
     .all(req.params.monthId);
   res.json(rows);
@@ -63,7 +63,7 @@ router.post('/apply-templates', (req, res) => {
   }
 
   const expenses = db
-    .prepare('SELECT * FROM expenses WHERE month_id = ? ORDER BY section, category, created_at')
+    .prepare('SELECT * FROM expenses WHERE month_id = ? ORDER BY created_at')
     .all(req.params.monthId);
   const income = db
     .prepare('SELECT * FROM income WHERE month_id = ? ORDER BY created_at')

@@ -116,6 +116,13 @@
 .cancelBtn { color: var(--color-text-muted); }
 .cancelBtn:hover { color: var(--color-text); }
 
+/* Sortable column headers */
+.sortableHeader {
+  cursor: pointer;
+  user-select: none;
+}
+.sortableHeader:hover { color: var(--color-text); }
+
 /* Empty state */
 .empty {
   text-align: center;

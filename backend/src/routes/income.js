@@ -7,7 +7,7 @@ const VALID_TYPES = ['paycheck', 'stock_bonus', 'performance_bonus', 'misc'];
 // GET /api/months/:monthId/income
 router.get('/', (req, res) => {
   const rows = db
-    .prepare('SELECT * FROM income WHERE month_id = ? ORDER BY date, created_at')
+    .prepare('SELECT * FROM income WHERE month_id = ? ORDER BY created_at')
     .all(req.params.monthId);
   res.json(rows);
 });
