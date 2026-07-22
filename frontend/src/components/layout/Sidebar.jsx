@@ -6,7 +6,7 @@ import styles from './Sidebar.module.css';
 
 export default function Sidebar() {
   const [months, setMonths] = useState([]);
-  const [collapsed, setCollapsed] = useState(new Set()); // years the user has closed
+  const [openYears, setOpenYears] = useState(() => new Set([new Date().getFullYear()]));
   const location = useLocation();
 
   // Re-fetch whenever the route changes — picks up months auto-created by MonthPage
@@ -23,7 +23,7 @@ export default function Sidebar() {
   const years = Object.keys(byYear).map(Number).sort((a, b) => b - a);
 
   function toggleYear(year) {
-    setCollapsed((prev) => {
+    setOpenYears((prev) => {
       const next = new Set(prev);
       if (next.has(year)) next.delete(year);
       else next.add(year);
@@ -45,7 +45,7 @@ export default function Sidebar() {
 
       <div className={styles.yearList}>
         {years.map((year) => {
-          const isOpen = !collapsed.has(year);
+          const isOpen = openYears.has(year);
           const yearMonths = byYear[year].sort((a, b) => a.month - b.month);
           return (
             <div key={year} className={styles.yearGroup}>

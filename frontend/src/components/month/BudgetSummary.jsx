@@ -4,10 +4,11 @@ function fmt(n) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
 
-function BudgetCard({ label, color, budgeted, spent, pct }) {
+function BudgetCard({ label, color, budgeted, spent, pct, incomeBase }) {
   const remaining = budgeted - spent;
   const usedPct = budgeted > 0 ? Math.min((spent / budgeted) * 100, 100) : 0;
   const over = spent > budgeted;
+  const ofIncomePct = incomeBase > 0 ? (spent / incomeBase) * 100 : 0;
 
   return (
     <div className={styles.card} style={{ '--accent': color }}>
@@ -38,6 +39,10 @@ function BudgetCard({ label, color, budgeted, spent, pct }) {
             {fmt(remaining)}
           </span>
         </div>
+        <div className={styles.cardStat}>
+          <span className={styles.statLabel}>% of Income</span>
+          <span className={styles.statValue}>{ofIncomePct.toFixed(0)}%</span>
+        </div>
       </div>
     </div>
   );
@@ -46,6 +51,8 @@ function BudgetCard({ label, color, budgeted, spent, pct }) {
 export default function BudgetSummary({ budgeted, spent, totalIncome }) {
   const totalSpent = spent.wants + spent.needs + spent.savings;
   const totalBudgeted = budgeted.wants + budgeted.needs + budgeted.savings;
+  const netAmount = totalBudgeted - totalSpent;
+  const leftoverPct = totalBudgeted > 0 ? (netAmount / totalBudgeted) * 100 : 0;
 
   return (
     <div className={styles.wrapper}>
@@ -56,6 +63,7 @@ export default function BudgetSummary({ budgeted, spent, totalIncome }) {
           budgeted={budgeted.needs}
           spent={spent.needs}
           pct={0.5}
+          incomeBase={totalBudgeted}
         />
         <BudgetCard
           label="Wants"
@@ -63,6 +71,7 @@ export default function BudgetSummary({ budgeted, spent, totalIncome }) {
           budgeted={budgeted.wants}
           spent={spent.wants}
           pct={0.3}
+          incomeBase={totalBudgeted}
         />
         <BudgetCard
           label="Savings"
@@ -70,6 +79,7 @@ export default function BudgetSummary({ budgeted, spent, totalIncome }) {
           budgeted={budgeted.savings}
           spent={spent.savings}
           pct={0.2}
+          incomeBase={totalBudgeted}
         />
       </div>
       <div className={styles.totals}>
@@ -83,8 +93,14 @@ export default function BudgetSummary({ budgeted, spent, totalIncome }) {
         </span>
         <span className={styles.totalItem}>
           <span className="text-muted">Net</span>
-          <strong className={totalBudgeted - totalSpent >= 0 ? 'text-green' : 'text-red'}>
-            {fmt(totalBudgeted - totalSpent)}
+          <strong className={netAmount >= 0 ? 'text-green' : 'text-red'}>
+            {fmt(netAmount)}
+          </strong>
+        </span>
+        <span className={styles.totalItem}>
+          <span className="text-muted">Leftover</span>
+          <strong className={leftoverPct >= 0 ? 'text-green' : 'text-red'}>
+            {leftoverPct.toFixed(1)}%
           </strong>
         </span>
       </div>

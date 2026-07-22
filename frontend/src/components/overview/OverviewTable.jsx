@@ -35,6 +35,8 @@ const fmt = (n) =>
 const fmtAlways = (n) =>
   n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
+const fmtPct = (n) => `${Math.round(n)}%`;
+
 // ─── Pivot API data into lookup maps ────────────────────────────────────────
 
 function buildMaps(data) {
@@ -93,6 +95,23 @@ function sumValues(...valueArrays) {
     if (valueArrays.every((arr) => arr[i] === null)) return null;
     return vals.reduce((s, v) => s + v, 0);
   });
+}
+
+function makePctValues(spentVals, baseVals) {
+  return spentVals.map((s, i) =>
+    s === null || baseVals[i] === null || baseVals[i] === 0
+      ? null
+      : (s / baseVals[i]) * 100
+  );
+}
+
+function pctStats(spentVals, baseVals) {
+  const totalSpent = spentVals.reduce((s, v) => s + (v ?? 0), 0);
+  const totalBase  = baseVals.reduce((s, v) => s + (v ?? 0), 0);
+  const total = totalBase > 0 ? (totalSpent / totalBase) * 100 : 0;
+  const nonNull = makePctValues(spentVals, baseVals).filter((v) => v !== null);
+  const avg = nonNull.length > 0 ? nonNull.reduce((s, v) => s + v, 0) / nonNull.length : 0;
+  return { total, avg };
 }
 
 // ─── Build rows array ────────────────────────────────────────────────────────
@@ -158,6 +177,7 @@ function buildRows(data) {
 
   const wantsTotalValues = sumValues(...wantsCategoryValues);
   push({ type: 'summary', label: 'Wants Total', values: wantsTotalValues, ...stats(wantsTotalValues, avgDenominator), className: styles.summaryWants });
+  push({ type: 'pct', label: '% of Income', values: makePctValues(wantsTotalValues, budgetBaseValues), ...pctStats(wantsTotalValues, budgetBaseValues), className: styles.pctWants });
 
   spacer();
 
@@ -179,6 +199,7 @@ function buildRows(data) {
 
   const needsTotalValues = sumValues(...needsCategoryValues);
   push({ type: 'summary', label: 'Needs Total', values: needsTotalValues, ...stats(needsTotalValues, avgDenominator), className: styles.summaryNeeds });
+  push({ type: 'pct', label: '% of Income', values: makePctValues(needsTotalValues, budgetBaseValues), ...pctStats(needsTotalValues, budgetBaseValues), className: styles.pctNeeds });
 
   spacer();
 
@@ -200,6 +221,7 @@ function buildRows(data) {
 
   const savingsTotalValues = sumValues(...savingsCategoryValues);
   push({ type: 'summary', label: 'Savings Total', values: savingsTotalValues, ...stats(savingsTotalValues, avgDenominator), className: styles.summarySavings });
+  push({ type: 'pct', label: '% of Income', values: makePctValues(savingsTotalValues, budgetBaseValues), ...pctStats(savingsTotalValues, budgetBaseValues), className: styles.pctSavings });
 
   spacer();
 
@@ -226,6 +248,7 @@ function buildRows(data) {
 
   const grandTotalValues = sumValues(needsTotalValues, wantsTotalValues, savingsTotalValues);
   push({ type: 'summary', label: 'Grand Total Spent', values: grandTotalValues, ...stats(grandTotalValues, avgDenominator), className: styles.summaryGrand });
+  push({ type: 'pct', label: 'Total % of Income', values: makePctValues(grandTotalValues, budgetBaseValues), ...pctStats(grandTotalValues, budgetBaseValues) });
 
   spacer();
 
@@ -246,8 +269,10 @@ function buildRows(data) {
 
 // ─── Cell renderer ───────────────────────────────────────────────────────────
 
-function Cell({ value, budget, isLeftover }) {
+function Cell({ value, budget, isLeftover, isPct }) {
   if (value === null) return <td className={styles.cellEmpty}>—</td>;
+
+  if (isPct) return <td className={styles.pctCell}>{fmtPct(value)}</td>;
 
   const text = fmt(value);
   if (!text) return <td className={styles.cellZero}>$0</td>;
@@ -256,7 +281,6 @@ function Cell({ value, budget, isLeftover }) {
   if (isLeftover) {
     cls = value >= 0 ? `${styles.cell} ${styles.positive}` : `${styles.cell} ${styles.negative}`;
   } else if (budget !== undefined && budget !== null) {
-    // Slightly highlight if over budget
     if (value > budget) cls = `${styles.cell} ${styles.overBudget}`;
   }
 
@@ -308,23 +332,26 @@ export default function OverviewTable({ data }) {
             }
 
             const isLeftover = row.type === 'leftover';
+            const isPct = row.type === 'pct';
 
             return (
               <tr
                 key={idx}
                 className={`${styles.dataRow} ${row.className ?? ''} ${
                   row.type === 'summary' ? styles.summaryRow : ''
-                } ${row.type === 'budget' ? styles.budgetRow : ''}`}
+                } ${row.type === 'budget' ? styles.budgetRow : ''} ${
+                  isPct ? styles.pctRow : ''
+                }`}
               >
                 <td className={styles.labelCell}>{row.label}</td>
                 {row.values.map((v, i) => (
-                  <Cell key={i} value={v} isLeftover={isLeftover} />
+                  <Cell key={i} value={v} isLeftover={isLeftover} isPct={isPct} />
                 ))}
                 <td className={`${styles.totalCell} ${isLeftover ? (row.total >= 0 ? styles.positive : styles.negative) : ''}`}>
-                  {fmtAlways(row.total)}
+                  {isPct ? fmtPct(row.total) : fmtAlways(row.total)}
                 </td>
                 <td className={`${styles.avgCell} text-muted`}>
-                  {fmtAlways(row.avg)}
+                  {isPct ? fmtPct(row.avg) : fmtAlways(row.avg)}
                 </td>
               </tr>
             );
