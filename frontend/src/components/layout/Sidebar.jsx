@@ -7,6 +7,8 @@ import styles from './Sidebar.module.css';
 export default function Sidebar() {
   const [months, setMonths] = useState([]);
   const [openYears, setOpenYears] = useState(() => new Set([new Date().getFullYear()]));
+  const [backingUp, setBackingUp] = useState(false);
+  const [backupMessage, setBackupMessage] = useState(null);
   const location = useLocation();
 
   // Re-fetch whenever the route changes — picks up months auto-created by MonthPage
@@ -33,6 +35,19 @@ export default function Sidebar() {
 
   const navClass = ({ isActive }) =>
     `${styles.link} ${isActive ? styles.active : ''}`;
+
+  async function handleBackup() {
+    setBackingUp(true);
+    setBackupMessage(null);
+    try {
+      const result = await api.backup.create();
+      setBackupMessage({ text: `Saved to ${result.path}` });
+    } catch (err) {
+      setBackupMessage({ text: err.message, error: true });
+    } finally {
+      setBackingUp(false);
+    }
+  }
 
   return (
     <nav className={styles.sidebar}>
@@ -77,6 +92,21 @@ export default function Sidebar() {
         })}
         {years.length === 0 && (
           <div className={styles.empty}>No data yet</div>
+        )}
+      </div>
+
+      <div className={styles.backupSection}>
+        <button
+          className={styles.backupBtn}
+          onClick={handleBackup}
+          disabled={backingUp}
+        >
+          {backingUp ? 'Backing up…' : '⤓ Backup DB'}
+        </button>
+        {backupMessage && (
+          <div className={backupMessage.error ? styles.backupError : styles.backupSuccess}>
+            {backupMessage.text}
+          </div>
         )}
       </div>
     </nav>

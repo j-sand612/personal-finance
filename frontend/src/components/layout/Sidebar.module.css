@@ -116,3 +116,48 @@
   font-size: 12px;
   font-style: italic;
 }
+
+/* ── Backup ──────────────────────────────────────────────────────────────── */
+
+.backupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.backupBtn {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 13px;
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+
+.backupBtn:hover:not(:disabled) {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.backupBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.backupSuccess {
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--color-green);
+  word-break: break-all;
+}
+
+.backupError {
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--color-red);
+  word-break: break-all;
+}

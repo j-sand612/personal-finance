@@ -1,23 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db/database');
-const { CATEGORIES, INCOME_TYPES, MONTH_NAMES, BUDGET_PERCENTAGES, PRETAX_SAVINGS } = require('../constants/categories');
-
-// Case-insensitive category lookup on an expenseMap section object.
-// Merges all keys that match the category name (e.g. 'Misc' + 'misc') into one month map.
-function findCategory(sectionMap, cat) {
-  if (!sectionMap) return undefined;
-  const lower = cat.toLowerCase();
-  const matchingKeys = Object.keys(sectionMap).filter((k) => k.toLowerCase() === lower);
-  if (matchingKeys.length === 0) return undefined;
-  const merged = {};
-  for (const key of matchingKeys) {
-    for (const [month, val] of Object.entries(sectionMap[key])) {
-      merged[Number(month)] = (merged[Number(month)] ?? 0) + val;
-    }
-  }
-  return merged;
-}
+const { buildMonthRows, buildYearRows } = require('../services/exportData');
 
 function escapeCsv(val) {
   if (val === null || val === undefined) return '';
@@ -28,268 +11,28 @@ function escapeCsv(val) {
   return s;
 }
 
-function buildRow(fields) {
-  return fields.map(escapeCsv).join(',');
-}
-
-function fmtDate(d) {
-  if (!d) return '';
-  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+function rowsToCsv(rows) {
+  return rows.map((row) => row.map(escapeCsv).join(',')).join('\n');
 }
 
 // GET /api/export/month/:monthId
-// Layout: Income | [sep] | Wants | [sep] | Needs | [sep] | Savings | [sep] | Budget Summary
-// All sections are zipped side by side, padded with empty cells where sections are shorter.
 router.get('/month/:monthId', (req, res) => {
-  const monthId = Number(req.params.monthId);
-  const month = db.prepare('SELECT * FROM months WHERE id = ?').get(monthId);
-  if (!month) return res.status(404).json({ error: 'Month not found' });
+  const result = buildMonthRows(Number(req.params.monthId));
+  if (!result) return res.status(404).json({ error: 'Month not found' });
 
-  const income   = db.prepare('SELECT * FROM income   WHERE month_id = ? ORDER BY date, created_at').all(monthId);
-  const expenses = db.prepare('SELECT * FROM expenses WHERE month_id = ? ORDER BY section, category, created_at').all(monthId);
-
-  const wants   = expenses.filter((e) => e.section === 'wants');
-  const needs   = expenses.filter((e) => e.section === 'needs');
-  const savings = expenses.filter((e) => e.section === 'savings');
-
-  // Budget calculations
-  const totalIncome    = income.reduce((s, r) => s + r.amount, 0);
-  const totalWants     = wants.reduce((s, r) => s + r.amount, 0);
-  const totalNeeds     = needs.reduce((s, r) => s + r.amount, 0);
-  const totalSavings   = savings.reduce((s, r) => s + r.amount, 0);
-  const preTaxSavings  = savings.filter((e) =>
-    PRETAX_SAVINGS.some((p) => p.toLowerCase() === e.category.toLowerCase())
-  );
-  const budgetBase     = totalIncome + preTaxSavings.reduce((s, r) => s + r.amount, 0);
-  const budgetNeeds  = budgetBase * BUDGET_PERCENTAGES.needs;
-  const budgetWants  = budgetBase * BUDGET_PERCENTAGES.wants;
-  const budgetSavings = budgetBase * BUDGET_PERCENTAGES.savings;
-  const grandTotal   = totalWants + totalNeeds + totalSavings;
-  const net          = budgetBase - grandTotal;
-
-  // Budget summary block (shown to the right of data columns).
-  // Row 0 is consumed by the header row; data rows use indices 1+.
-  const budgetBlock = [
-    ['Needs',        budgetNeeds,   totalNeeds,   budgetNeeds - totalNeeds],
-    ['Wants',        budgetWants,   totalWants,   budgetWants - totalWants],
-    ['Savings',      budgetSavings, totalSavings, budgetSavings - totalSavings],
-    ['', '', '', ''],
-    ['Budget Base',  budgetBase,    '',           ''],
-    ['Total Income', totalIncome,   '',           ''],
-    ['Grand Total',  '',            grandTotal,   ''],
-    ['Net',          '',            '',           net],
-  ];
-
-  const EMPTY_INC  = ['', ''];
-  const EMPTY_SEC  = ['', '', '', ''];
-  const EMPTY_BUD  = ['', '', '', ''];
-
-  const header = buildRow([
-    'Income Amount', 'Income Type', '',
-    'Want Date', 'Want Amount', 'Want Category', 'Want Description', '',
-    'Need Date', 'Need Amount', 'Need Category', 'Need Description', '',
-    'Savings Date', 'Savings Amount', 'Savings Category', 'Savings Description', '',
-    'Budget Section', 'Budgeted', 'Spent', 'Leftover',
-  ]);
-
-  const maxRows = Math.max(income.length, wants.length, needs.length, savings.length, budgetBlock.length);
-  const csvRows = [header];
-
-  for (let i = 0; i < maxRows; i++) {
-    const r = income[i];
-    const w = wants[i];
-    const n = needs[i];
-    const sv = savings[i];
-    const b = budgetBlock[i];
-
-    const incCols  = r  ? [r.amount,  r.type]                              : EMPTY_INC;
-    const wanCols  = w  ? [fmtDate(w.date),  w.amount,  w.category,  w.detail  ?? ''] : EMPTY_SEC;
-    const nedCols  = n  ? [fmtDate(n.date),  n.amount,  n.category,  n.detail  ?? ''] : EMPTY_SEC;
-    const savCols  = sv ? [fmtDate(sv.date), sv.amount, sv.category, sv.detail ?? ''] : EMPTY_SEC;
-    const budCols  = b  ? b                                                : EMPTY_BUD;
-
-    csvRows.push(buildRow([...incCols, '', ...wanCols, '', ...nedCols, '', ...savCols, '', ...budCols]));
-  }
-
-  const monthName = MONTH_NAMES[month.month - 1];
   res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', `attachment; filename="${monthName}-${month.year}.csv"`);
-  res.send(csvRows.join('\n'));
+  res.setHeader('Content-Disposition', `attachment; filename="${result.monthName}-${result.year}.csv"`);
+  res.send(rowsToCsv(result.rows));
 });
 
 // GET /api/export/year/:year
-// Columns: section, category, Jan–Dec, Total, Avg
-// Sections are separated by empty rows; leftover rows appear after budget percentages.
 router.get('/year/:year', (req, res) => {
-  const year = Number(req.params.year);
-
-  const months = db.prepare('SELECT id, month FROM months WHERE year = ? ORDER BY month').all(year);
-  if (months.length === 0) return res.status(404).json({ error: 'No data for this year' });
-
-  const incomeRows = db.prepare(
-    `SELECT m.month, i.type, SUM(i.amount) AS total
-     FROM income i JOIN months m ON m.id = i.month_id
-     WHERE m.year = ? GROUP BY m.month, i.type`
-  ).all(year);
-
-  const expenseRows = db.prepare(
-    `SELECT m.month, e.section, e.category, SUM(e.amount) AS total
-     FROM expenses e JOIN months m ON m.id = e.month_id
-     WHERE m.year = ? GROUP BY m.month, e.section, e.category`
-  ).all(year);
-
-  const incomeMap = {};
-  for (const r of incomeRows) {
-    if (!incomeMap[r.type]) incomeMap[r.type] = {};
-    incomeMap[r.type][r.month] = (incomeMap[r.type][r.month] ?? 0) + r.total;
-  }
-
-  const expenseMap = {};
-  for (const r of expenseRows) {
-    if (!expenseMap[r.section]) expenseMap[r.section] = {};
-    if (!expenseMap[r.section][r.category]) expenseMap[r.section][r.category] = {};
-    expenseMap[r.section][r.category][r.month] = r.total;
-  }
-
-  const activeMonths = new Set(months.map((m) => m.month));
-  const ALL_MONTHS   = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-  const SHORT_MONTHS = MONTH_NAMES.map((n) => n.slice(0, 3));
-  const avgDenom     = months.length;
-
-  function vals(monthMap) {
-    return ALL_MONTHS.map((m) => (activeMonths.has(m) ? (monthMap?.[m] ?? 0) : null));
-  }
-
-  function sumVals(...arrays) {
-    return ALL_MONTHS.map((_, i) => {
-      if (arrays.every((a) => a[i] === null)) return null;
-      return arrays.reduce((s, a) => s + (a[i] ?? 0), 0);
-    });
-  }
-
-  function rowTotal(values) { return values.reduce((s, v) => s + (v ?? 0), 0); }
-  function rowAvg(values)   { return avgDenom > 0 ? rowTotal(values) / avgDenom : 0; }
-
-  const TOTAL_COLS = 2 + 12 + 2; // section + category + 12 months + Total + Avg
-  const csvRows = [buildRow(['section', 'category', ...SHORT_MONTHS, 'Total', 'Avg'])];
-
-  function addRow(section, category, values) {
-    const total = rowTotal(values);
-    const avg   = rowAvg(values);
-    csvRows.push(buildRow([section, category, ...ALL_MONTHS.map((_, i) => values[i] ?? ''), total, avg.toFixed(2)]));
-  }
-
-  function addEmptyRow() {
-    csvRows.push(Array(TOTAL_COLS).fill('').join(','));
-  }
-
-  // Sum categories in sectionMap not matched by any known category (case-insensitive).
-  // Returns a vals array if unknowns exist, or null if nothing to show.
-  function getOtherVals(sectionMap, knownCats) {
-    if (!sectionMap) return null;
-    const unknownKeys = Object.keys(sectionMap).filter(
-      (k) => !knownCats.some((c) => c.toLowerCase() === k.toLowerCase())
-    );
-    if (unknownKeys.length === 0) return null;
-    const otherMonthMap = {};
-    for (const key of unknownKeys) {
-      for (const [month, val] of Object.entries(sectionMap[key])) {
-        otherMonthMap[Number(month)] = (otherMonthMap[Number(month)] ?? 0) + val;
-      }
-    }
-    return vals(otherMonthMap);
-  }
-
-  // ── Income ──────────────────────────────────────────────────────────────────
-  const incomeByType = INCOME_TYPES.map(({ value, label }) => {
-    const v = vals(incomeMap[value]);
-    addRow('income', label, v);
-    return v;
-  });
-  const totalIncomeVals = sumVals(...incomeByType);
-  addRow('income', 'TOTAL INCOME', totalIncomeVals);
-
-  addEmptyRow();
-
-  const preTaxVals = PRETAX_SAVINGS.map((cat) => {
-    const v = vals(findCategory(expenseMap['savings'], cat));
-    addRow('savings', `${cat} Contributions`, v);
-    return v;
-  });
-  const budgetBaseVals = sumVals(totalIncomeVals, ...preTaxVals);
-  addRow('summary', 'BUDGET BASE', budgetBaseVals);
-
-  addEmptyRow();
-
-  // ── Wants ────────────────────────────────────────────────────────────────────
-  const wantsVals = CATEGORIES.wants.map((cat) => {
-    const v = vals(findCategory(expenseMap['wants'], cat));
-    addRow('wants', cat, v);
-    return v;
-  });
-  const wantsOther = getOtherVals(expenseMap['wants'], CATEGORIES.wants);
-  if (wantsOther) { addRow('wants', 'Other', wantsOther); wantsVals.push(wantsOther); }
-  const wantsTotalVals = sumVals(...wantsVals);
-  addRow('wants', 'WANTS TOTAL', wantsTotalVals);
-
-  addEmptyRow();
-
-  // ── Needs ────────────────────────────────────────────────────────────────────
-  const needsVals = CATEGORIES.needs.map((cat) => {
-    const v = vals(findCategory(expenseMap['needs'], cat));
-    addRow('needs', cat, v);
-    return v;
-  });
-  const needsOther = getOtherVals(expenseMap['needs'], CATEGORIES.needs);
-  if (needsOther) { addRow('needs', 'Other', needsOther); needsVals.push(needsOther); }
-  const needsTotalVals = sumVals(...needsVals);
-  addRow('needs', 'NEEDS TOTAL', needsTotalVals);
-
-  addEmptyRow();
-
-  // ── Savings ──────────────────────────────────────────────────────────────────
-  const savingsVals = CATEGORIES.savings.map((cat) => {
-    const v = vals(findCategory(expenseMap['savings'], cat));
-    addRow('savings', cat, v);
-    return v;
-  });
-  const savingsOther = getOtherVals(expenseMap['savings'], CATEGORIES.savings);
-  if (savingsOther) { addRow('savings', 'Other', savingsOther); savingsVals.push(savingsOther); }
-  const savingsTotalVals = sumVals(...savingsVals);
-  addRow('savings', 'SAVINGS TOTAL', savingsTotalVals);
-
-  addEmptyRow();
-
-  // ── Budget & Leftovers ───────────────────────────────────────────────────────
-  const mkBudget = (pct) => budgetBaseVals.map((v) => (v === null ? null : v * pct));
-  const needsBudgetVals   = mkBudget(BUDGET_PERCENTAGES.needs);
-  const wantsBudgetVals   = mkBudget(BUDGET_PERCENTAGES.wants);
-  const savingsBudgetVals = mkBudget(BUDGET_PERCENTAGES.savings);
-
-  addRow('budget', 'Needs Budget (50%)',   needsBudgetVals);
-  addRow('budget', 'Wants Budget (30%)',   wantsBudgetVals);
-  addRow('budget', 'Savings Budget (20%)', savingsBudgetVals);
-
-  addEmptyRow();
-
-  const needsLeftover   = needsBudgetVals.map((b, i)   => b === null ? null : b - (needsTotalVals[i]   ?? 0));
-  const wantsLeftover   = wantsBudgetVals.map((b, i)   => b === null ? null : b - (wantsTotalVals[i]   ?? 0));
-  const savingsLeftover = savingsBudgetVals.map((b, i) => b === null ? null : b - (savingsTotalVals[i] ?? 0));
-  const totalLeftover   = sumVals(needsLeftover, wantsLeftover, savingsLeftover);
-
-  addRow('leftover', 'Needs Leftover',   needsLeftover);
-  addRow('leftover', 'Wants Leftover',   wantsLeftover);
-  addRow('leftover', 'Savings Leftover', savingsLeftover);
-  addRow('leftover', 'Total Leftover',   totalLeftover);
-
-  addEmptyRow();
-
-  const grandTotalVals = sumVals(needsTotalVals, wantsTotalVals, savingsTotalVals);
-  addRow('summary', 'GRAND TOTAL SPENT', grandTotalVals);
+  const result = buildYearRows(Number(req.params.year));
+  if (!result) return res.status(404).json({ error: 'No data for this year' });
 
   res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', `attachment; filename="${year}-overview.csv"`);
-  res.send(csvRows.join('\n'));
+  res.setHeader('Content-Disposition', `attachment; filename="${req.params.year}-overview.csv"`);
+  res.send(rowsToCsv(result.rows));
 });
 
 module.exports = router;

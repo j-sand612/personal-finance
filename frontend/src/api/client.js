@@ -52,6 +52,13 @@ export const api = {
   overview: {
     get: (year) => request('GET', `/overview/${year}`),
   },
+  sheetsSync: {
+    month: (monthId) => request('POST', `/sheets-sync/month/${monthId}`),
+    year: (year) => request('POST', `/sheets-sync/year/${year}`),
+  },
+  backup: {
+    create: () => request('POST', '/backup'),
+  },
   import: {
     month: async (monthId, csvText, format = 'new') => {
       const res = await fetch(`/api/import/month/${monthId}?format=${format}`, {

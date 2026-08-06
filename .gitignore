@@ -1,5 +1,6 @@
 node_modules/
 backend/data/
+backend/credentials/
 frontend/dist/
 .env
 *.env.local

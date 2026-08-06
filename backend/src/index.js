@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
@@ -9,6 +10,8 @@ const templatesRouter = require('./routes/templates');
 const overviewRouter = require('./routes/overview');
 const exportRouter   = require('./routes/export');
 const importRouter   = require('./routes/import');
+const sheetsSyncRouter = require('./routes/sheetsSync');
+const backupRouter = require('./routes/backup');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,6 +31,8 @@ app.use('/api/templates', templatesRouter);
 app.use('/api/overview', overviewRouter);
 app.use('/api/export',   exportRouter);
 app.use('/api/import',   importRouter);
+app.use('/api/sheets-sync', sheetsSyncRouter);
+app.use('/api/backup', backupRouter);
 
 app.use(errorHandler);
 

@@ -13,6 +13,8 @@ export default function OverviewPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,6 +30,19 @@ export default function OverviewPage() {
     return () => { cancelled = true; };
   }, [yearNum]);
 
+  async function handleSync() {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const result = await api.sheetsSync.year(yearNum);
+      setSyncMessage({ text: `Synced to "${result.tab}" tab.` });
+    } catch (err) {
+      setSyncMessage({ text: err.message, error: true });
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -36,12 +51,25 @@ export default function OverviewPage() {
         <button className={styles.yearBtn} onClick={() => navigate(`/overview/${yearNum + 1}`)}>→</button>
         <button
           className={styles.exportBtn}
+          disabled={!data || data.months.length === 0 || syncing}
+          onClick={handleSync}
+        >
+          {syncing ? 'Syncing…' : '⇪ Sync to Sheets'}
+        </button>
+        <button
+          className={styles.exportBtn}
           disabled={!data || data.months.length === 0}
           onClick={() => downloadFile(`/api/export/year/${yearNum}`, `${yearNum}-overview.csv`)}
         >
           ↓ Export
         </button>
       </div>
+
+      {syncMessage && (
+        <div className={syncMessage.error ? styles.syncError : styles.syncSuccess}>
+          {syncMessage.text}
+        </div>
+      )}
 
       {loading && <div className={styles.state}>Loading…</div>}
       {error   && <div className={styles.stateError}>Error: {error}</div>}

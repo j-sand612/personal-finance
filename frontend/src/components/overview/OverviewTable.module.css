@@ -43,7 +43,7 @@
 .totalCol  { min-width: 80px; border-left: 2px solid var(--color-border); }
 .avgCol    { min-width: 72px; }
 
-.inactiveMonth { color: rgba(139, 118, 184, 0.4); }
+.inactiveMonth { color: rgba(153, 153, 204, 0.4); }
 
 /* ── Data rows ──────────────────────────────────────────────── */
 .dataRow td {
@@ -76,8 +76,8 @@
 
 /* ── Cell states ────────────────────────────────────────────── */
 .cell     {}
-.cellZero { color: rgba(139, 118, 184, 0.45); }
-.cellEmpty { color: rgba(139, 118, 184, 0.3); text-align: center !important; }
+.cellZero { color: rgba(153, 153, 204, 0.45); }
+.cellEmpty { color: rgba(153, 153, 204, 0.3); text-align: center !important; }
 
 .positive { color: var(--color-green) !important; }
 .negative { color: var(--color-red) !important; }
@@ -93,10 +93,10 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-.headerIncome td  { color: var(--color-accent);  background: rgba(147, 51, 234, 0.07); }
-.headerWants td   { color: var(--color-wants);   background: rgba(249, 115, 22, 0.07); }
-.headerNeeds td   { color: var(--color-needs);   background: rgba(2, 132, 199, 0.07); }
-.headerSavings td { color: var(--color-savings); background: rgba(22, 163, 74, 0.07); }
+.headerIncome td  { color: var(--color-accent);  background: rgba(221, 34, 34, 0.1); }
+.headerWants td   { color: var(--color-wants);   background: rgba(255, 119, 51, 0.1); }
+.headerNeeds td   { color: var(--color-needs);   background: rgba(68, 170, 255, 0.1); }
+.headerSavings td { color: var(--color-savings); background: rgba(34, 204, 68, 0.1); }
 .headerBudget td  { color: var(--color-text-muted); background: var(--color-surface-2); }
 
 /* ── Summary rows ───────────────────────────────────────────── */
@@ -124,9 +124,9 @@
   background: var(--color-surface-2);
 }
 
-.budgetNeeds td   { color: rgba(2, 132, 199, 0.7); }
-.budgetWants td   { color: rgba(249, 115, 22, 0.7); }
-.budgetSavings td { color: rgba(22, 163, 74, 0.7); }
+.budgetNeeds td   { color: rgba(68, 170, 255, 0.7); }
+.budgetWants td   { color: rgba(255, 119, 51, 0.7); }
+.budgetSavings td { color: rgba(34, 204, 68, 0.7); }
 
 /* ── Leftover rows ──────────────────────────────────────────── */
 .leftoverNeeds td,
@@ -134,6 +134,21 @@
 .leftoverSavings td {
   background: var(--color-surface-2);
 }
+
+/* ── Percent-of-income rows ─────────────────────────────────── */
+.pctRow td {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--color-text-muted);
+  padding-top: 3px;
+  padding-bottom: 5px;
+}
+
+.pctCell { text-align: right; }
+
+.pctWants td   { color: rgba(255, 119, 51, 0.7); }
+.pctNeeds td   { color: rgba(68, 170, 255, 0.7); }
+.pctSavings td { color: rgba(34, 204, 68, 0.7); }
 
 /* ── Spacer rows ────────────────────────────────────────────── */
 .spacer td {

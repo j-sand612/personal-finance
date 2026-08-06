@@ -27,6 +27,8 @@ export default function MonthPage() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null); // { income, expenses, errors }
   const [importFormat, setImportFormat] = useState('new');
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState(null);
   const fileInputRef = useRef(null);
 
   // Ensure the month row exists and load its data
@@ -152,6 +154,20 @@ export default function MonthPage() {
     }
   }
 
+  // ── Sync to Sheets ───────────────────────────────────────────────────────
+  async function handleSync() {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const result = await api.sheetsSync.month(monthId);
+      setSyncMessage({ text: `Synced to "${result.tab}" tab.` });
+    } catch (err) {
+      setSyncMessage({ text: err.message, error: true });
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   // ── Budget computation ────────────────────────────────────────────────────
   const totalIncome = income.reduce((s, r) => s + r.amount, 0);
   const savingsExpenses = expenses.filter((e) => e.section === 'savings');
@@ -217,6 +233,13 @@ export default function MonthPage() {
           />
           <button
             className={styles.exportBtn}
+            onClick={handleSync}
+            disabled={!monthId || syncing}
+          >
+            {syncing ? 'Syncing…' : '⇪ Sync to Sheets'}
+          </button>
+          <button
+            className={styles.exportBtn}
             onClick={() => downloadFile(`/api/export/month/${monthId}`, `${monthName}-${year}.csv`)}
             disabled={!monthId}
           >
@@ -224,6 +247,13 @@ export default function MonthPage() {
           </button>
         </div>
       </div>
+
+      {syncMessage && (
+        <div className={syncMessage.error ? styles.importError : styles.importSuccess}>
+          <span>{syncMessage.text}</span>
+          <button className={styles.importDismiss} onClick={() => setSyncMessage(null)}>✕</button>
+        </div>
+      )}
 
       {importResult && (
         <div className={importResult.error ? styles.importError : styles.importSuccess}>
