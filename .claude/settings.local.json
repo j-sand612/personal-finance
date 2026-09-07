@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(npx vite:*)",
-      "Bash(node --experimental-sqlite -e \":*)"
+      "Bash(node --experimental-sqlite -e \":*)",
+      "Bash(timeout 45 bash -c 'until curl -sf http://localhost:5173 >/dev/null 2>&1; do sleep 1; done')",
+      "Bash(timeout 10 bash -c 'until curl -sf http://localhost:3001/api/months >/dev/null 2>&1; do sleep 1; done')"
     ]
   }
 }

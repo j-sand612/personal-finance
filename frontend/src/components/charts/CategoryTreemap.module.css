@@ -1,0 +1,189 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Legend ---------- */
+.legendRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.legendChip {
+  flex: 1;
+  min-width: 160px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.legendChip.compact {
+  flex: none;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  padding: 5px 10px;
+  gap: 6px;
+}
+
+.legendTop {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.legendName {
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.legendMuted {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.legendAmount {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Treemap ---------- */
+.treemapWrap {
+  position: relative;
+  width: 100%;
+  height: 420px;
+}
+
+.treemap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.sectionGroup { position: absolute; }
+
+.sectionHeader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sectionHeader .amt {
+  margin-left: auto;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.cell {
+  position: absolute;
+  border-radius: 5px;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  padding: 6px 8px;
+  transition: filter 0.1s;
+}
+
+.cell:hover, .cell:focus-visible { filter: brightness(1.16); }
+.cell:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+
+.cellLabel {
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.cellLabel .name {
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.cellLabel .amt {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.92;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+/* ---------- Tooltip ---------- */
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  background: var(--color-surface-3, var(--color-surface-2));
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px 11px;
+  font-size: 12.5px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  max-width: 220px;
+}
+
+.tooltipName {
+  font-weight: 700;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tooltipValue {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltipMeta {
+  color: var(--color-text-muted);
+  font-size: 11.5px;
+  margin-top: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell { transition: none; }
+}
+
+@media (max-width: 640px) {
+  .treemapWrap { height: 520px; }
+}

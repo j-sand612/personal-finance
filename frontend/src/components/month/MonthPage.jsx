@@ -7,7 +7,14 @@ import BudgetSummary from './BudgetSummary.jsx';
 import QuickAddForm from './QuickAddForm.jsx';
 import IncomeSection from './IncomeSection.jsx';
 import ExpenseSection from './ExpenseSection.jsx';
+import CollapsibleSection from '../charts/CollapsibleSection.jsx';
+import CategoryTreemap from '../charts/CategoryTreemap.jsx';
+import CategoryTrends from '../charts/CategoryTrends.jsx';
+import { groupByCategory, seriesFromTrendResponse, rankBySwing } from '../../utils/spendingBreakdown.js';
 import styles from './MonthPage.module.css';
+
+const TREND_RANGE_OPTIONS = [{ label: '3M', n: 3 }, { label: '6M', n: 6 }, { label: '12M', n: 12 }];
+const fmtUSD = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 export default function MonthPage() {
   const { year, month } = useParams();
@@ -21,6 +28,7 @@ export default function MonthPage() {
   const [notesSaving, setNotesSaving] = useState(false);
   const [income, setIncome] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [trend, setTrend] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [applyingTemplates, setApplyingTemplates] = useState(false);
@@ -50,13 +58,15 @@ export default function MonthPage() {
         setNotes(m.notes ?? '');
         setNotesDraft(m.notes ?? '');
 
-        const [inc, exp] = await Promise.all([
+        const [inc, exp, trd] = await Promise.all([
           api.income.list(m.id),
           api.expenses.list(m.id),
+          api.trend.get(yearNum, monthNum, 12),
         ]);
         if (cancelled) return;
         setIncome(inc);
         setExpenses(exp);
+        setTrend(trd);
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
@@ -191,6 +201,21 @@ export default function MonthPage() {
   const monthName = MONTH_NAMES[monthNum - 1];
   const hasExpenses = expenses.length > 0;
 
+  const treemapData = groupByCategory(expenses);
+  const treemapTotal = treemapData.reduce((s, d) => s + d.amount, 0);
+  const visibleCategoryCount = treemapData.filter((d) => d.amount > 0).length;
+  const treemapSummary = visibleCategoryCount
+    ? `${fmtUSD(treemapTotal)} · ${visibleCategoryCount} ${visibleCategoryCount === 1 ? 'category' : 'categories'}`
+    : null;
+
+  const { series: trendSeries, monthLabels: trendMonthLabels } = trend
+    ? seriesFromTrendResponse(trend)
+    : { series: [], monthLabels: [] };
+  const topSwing = rankBySwing(trendSeries)[0];
+  const trendSummary = topSwing
+    ? `Biggest swing: ${topSwing.category} ${topSwing.delta > 0 ? '+' : '−'}${fmtUSD(Math.abs(topSwing.delta))}`
+    : null;
+
   if (loading) return <div className={styles.state}>Loading {monthName} {year}…</div>;
   if (error)   return <div className={styles.stateError}>Error: {error}</div>;
 
@@ -272,6 +297,19 @@ export default function MonthPage() {
       )}
 
       <BudgetSummary budgeted={budgeted} spent={spent} totalIncome={totalIncome} />
+
+      <CollapsibleSection title="Spending by category" summary={treemapSummary} defaultCollapsed>
+        <CategoryTreemap data={treemapData} legendVariant="compact" />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Category trends" summary={trendSummary} defaultCollapsed>
+        <CategoryTrends
+          series={trendSeries}
+          monthLabels={trendMonthLabels}
+          rangeOptions={TREND_RANGE_OPTIONS}
+          defaultRangeIndex={1}
+        />
+      </CollapsibleSection>
 
       <QuickAddForm
         onAddExpense={handleAddExpense}

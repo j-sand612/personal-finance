@@ -5,22 +5,30 @@
 }
 
 :root {
-  --color-bg: #06063a;
-  --color-surface: #0d0d52;
-  --color-surface-2: #18186a;
-  --color-border: #2a2a88;
-  --color-text: #fff5cc;
-  --color-text-muted: #9999cc;
-  --color-accent: #dd2222;
-  --color-accent-hover: #bb1111;
-  --color-green: #22cc44;
-  --color-red: #ff5555;
+  /* "Sandcastle" theme — warm dark base, coral accent, sea-glass sections. */
+  --color-bg: #1c1613;
+  --color-surface: #291f19;
+  --color-surface-2: #372a1f;
+  --color-border: #4a3a2a;
+  --color-text: #fdf3e0;
+  --color-text-muted: #b9a68a;
+  --color-accent: #ff6b4a;
+  --color-accent-hover: #e8532f;
+  --color-green: #4ade80;
+  --color-red: #f56565;
   --color-yellow: #ffd700;
-  --color-wants: #ff7733;
-  --color-needs: #44aaff;
-  --color-savings: #22cc44;
+  --color-wants: #e8a23a;
+  --color-needs: #2fb6c4;
+  --color-savings: #3aa88a;
   --color-sage: #44bb33;
   --color-moonrock: #aaaaee;
+  /* Darker, colorblind-validated variants of --color-wants/needs/savings for
+     large chart fills (treemap cells, sparkline lines) — the UI-tone colors
+     above are too light (OKLCH L ~0.71-0.76) to clear the dark-surface CVD
+     safety check at that area. See validate_palette.js --mode dark. */
+  --viz-wants: #c8811f;
+  --viz-needs: #0e93a8;
+  --viz-savings: #3aa88a;
   --radius: 10px;
   --sidebar-width: 220px;
 }

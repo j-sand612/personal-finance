@@ -52,6 +52,9 @@ export const api = {
   overview: {
     get: (year) => request('GET', `/overview/${year}`),
   },
+  trend: {
+    get: (year, month, n = 6) => request('GET', `/trend/${year}/${month}?n=${n}`),
+  },
   sheetsSync: {
     month: (monthId) => request('POST', `/sheets-sync/month/${monthId}`),
     year: (year) => request('POST', `/sheets-sync/year/${year}`),

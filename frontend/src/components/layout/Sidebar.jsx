@@ -51,7 +51,7 @@ export default function Sidebar() {
 
   return (
     <nav className={styles.sidebar}>
-      <div className={styles.logo}>Sandcastle Bank</div>
+      <div className={styles.logo}>Bank of Sandcastle</div>
 
       <div className={styles.topLinks}>
         <NavLink to="/" end className={navClass}>Dashboard</NavLink>

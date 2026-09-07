@@ -156,7 +156,7 @@
 }
 
 .editBtn:hover   { background: var(--color-surface-2); }
-.deleteBtn:hover { background: rgba(239, 68, 68, 0.15); }
+.deleteBtn:hover { background: color-mix(in srgb, var(--color-red) 15%, transparent); }
 
 .saveBtn {
   background: var(--color-accent);
