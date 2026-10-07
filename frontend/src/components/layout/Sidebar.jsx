@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client.js';
+import { downloadFile } from '../../api/download.js';
 import { MONTH_NAMES } from '../../constants/categories.js';
 import styles from './Sidebar.module.css';
 
@@ -40,8 +41,11 @@ export default function Sidebar() {
     setBackingUp(true);
     setBackupMessage(null);
     try {
-      const result = await api.backup.create();
-      setBackupMessage({ text: `Saved to ${result.path}` });
+      const { blob, filename } = await api.backup.download();
+      const url = URL.createObjectURL(blob);
+      downloadFile(url, filename);
+      URL.revokeObjectURL(url);
+      setBackupMessage({ text: `Downloaded ${filename}` });
     } catch (err) {
       setBackupMessage({ text: err.message, error: true });
     } finally {

@@ -60,7 +60,16 @@ export const api = {
     year: (year) => request('POST', `/sheets-sync/year/${year}`),
   },
   backup: {
-    create: () => request('POST', '/backup'),
+    // Returns { blob, filename } so the caller can hand it to the browser as a download
+    download: async () => {
+      const res = await fetch(`${BASE}/backup`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      const match = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') || '');
+      return { blob: await res.blob(), filename: match ? match[1] : 'finance-backup.db' };
+    },
   },
   import: {
     month: async (monthId, csvText, format = 'new') => {

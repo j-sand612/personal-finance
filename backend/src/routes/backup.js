@@ -1,15 +1,21 @@
 const express = require('express');
+const fs = require('fs');
 const router = express.Router();
-const { createBackup } = require('../services/backup');
+const { createBackup, backupFilename } = require('../services/backup');
 
-// POST /api/backup — snapshots the DB and writes it to BACKUP_DIR (defaults to Desktop)
-router.post('/', (req, res, next) => {
+// GET /api/backup — snapshots the DB and streams it to the browser as a download,
+// so the backup lands on whichever device clicked the button (not the server's disk)
+router.get('/', (req, res, next) => {
+  let tmpPath;
   try {
-    const filePath = createBackup();
-    res.json({ ok: true, path: filePath });
+    tmpPath = createBackup();
   } catch (err) {
-    next(err);
+    return next(err);
   }
+  res.download(tmpPath, backupFilename(), (err) => {
+    fs.unlink(tmpPath, () => {});
+    if (err && !res.headersSent) next(err);
+  });
 });
 
 module.exports = router;
