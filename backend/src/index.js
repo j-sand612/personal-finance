@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
@@ -35,6 +37,14 @@ app.use('/api/export',   exportRouter);
 app.use('/api/import',   importRouter);
 app.use('/api/sheets-sync', sheetsSyncRouter);
 app.use('/api/backup', backupRouter);
+
+// Serve the built frontend (npm run build) so one process runs the whole app
+const DIST_DIR = path.join(__dirname, '../../frontend/dist');
+if (fs.existsSync(DIST_DIR)) {
+  app.use(express.static(DIST_DIR));
+  // SPA fallback: let React Router handle non-API routes
+  app.get(/^(?!\/api\/).*/, (req, res) => res.sendFile(path.join(DIST_DIR, 'index.html')));
+}
 
 app.use(errorHandler);
 
